@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Cartera - El Buen Precio</title>
+
+<style>
+body { margin:0; font-family:Arial; display:flex; }
+
+/* SIDEBAR */
+.sidebar {
+    width:220px; background:#1e1e2f; color:white;
+    height:100vh; padding:20px;
+}
+
+.sidebar a {
+    display:block; color:#ccc; padding:10px;
+    text-decoration:none; margin-top:10px;
+}
+
+.sidebar a:hover { background:#00cec9; color:white; }
+
+/* CONTENIDO */
+.content {
+    flex:1; padding:30px; background:#f5f6fa;
+}
+
+/* TARJETAS */
+.card {
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0px 5px 15px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+    text-align:center;
+}
+
+.card h2 {
+    margin-bottom:10px;
+    color:#2d3436;
+}
+
+.valor {
+    font-size:28px;
+    font-weight:bold;
+}
+
+/* COLORES */
+.cartera { border-left:8px solid #0984e3; }
+.creditos { border-left:8px solid #00b894; }
+.abonos { border-left:8px solid #d63031; }
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛒 El Buen Precio</h2>
+    <a href="clientes.html">👥 Clientes</a>
+    <a href="creditos.html">💳 Créditos</a>
+    <a href="abonos.html">💰 Abonos</a>
+    <a href="cartera.html">📊 Cartera</a>
+</div>
+
+<div class="content">
+    <h1>📊 Resumen de Cartera</h1>
+
+    <div class="card cartera">
+        <h2>💰 Total en cartera</h2>
+        <div class="valor" id="cartera">$0</div>
+    </div>
+
+    <div class="card creditos">
+        <h2>📈 Total créditos</h2>
+        <div class="valor" id="creditos">$0</div>
+    </div>
+
+    <div class="card abonos">
+        <h2>📉 Total abonos</h2>
+        <div class="valor" id="abonos">$0</div>
+    </div>
+
+</div>
+
+<script>
+
+// 🔥 CARGAR CARTERA
+function cargarCartera(){
+    fetch('http://localhost:3000/cartera')
+    .then(res => res.json())
+    .then(data => {
+
+        document.getElementById('cartera').innerText = "$" + data.cartera;
+        document.getElementById('creditos').innerText = "$" + data.totalCreditos;
+        document.getElementById('abonos').innerText = "$" + data.totalAbonos;
+
+    });
+}
+
+cargarCartera();
+
+</script>
+
+</body>
+</html>

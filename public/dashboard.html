@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>El Buen Precio - Dashboard</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    background: #1e1e2f;
+    color: white;
+    height: 100vh;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    text-align: center;
+}
+
+.sidebar a {
+    display: block;
+    color: #ccc;
+    padding: 10px;
+    text-decoration: none;
+    margin-top: 10px;
+}
+
+.sidebar a:hover {
+    background: #00cec9;
+    color: white;
+}
+
+/* CONTENIDO */
+.content {
+    flex: 1;
+    padding: 40px;
+    background: #f5f6fa;
+}
+
+/* BIENVENIDA */
+.welcome {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.welcome h1 {
+    color: #2d3436;
+}
+
+.welcome p {
+    color: #636e72;
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+/* TARJETAS RÁPIDAS */
+.quick {
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.quick a {
+    background: #00cec9;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.quick a:hover {
+    background: #00b894;
+}
+</style>
+
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>🛒 El Buen Precio</h2>
+
+    <a href="clientes.html">👥 Clientes</a>
+    <a href="creditos.html">💳 Créditos</a>
+    <a href="abonos.html">💰 Abonos</a>
+    <a href="cartera.html">📊 Cartera</a>
+</div>
+
+<div class="content">
+    <div class="welcome">
+        <h1>Bienvenida al sistema 💼</h1>
+        <p>Gestiona clientes, créditos y pagos de forma fácil y rápida.</p>
+        <p><strong>Selecciona una opción del menú o usa accesos rápidos.</strong></p>
+
+        <!--  BOTONES RÁPIDOS -->
+        <div class="quick">
+            <a href="clientes.html">👥 Clientes</a>
+            <a href="creditos.html">💳 Créditos</a>
+            <a href="abonos.html">💰 Abonos</a>
+            <a href="cartera.html">📊 Cartera</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

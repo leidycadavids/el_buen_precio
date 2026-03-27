@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Detalle Cliente</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #1e1e2f;
+    color: white;
+    padding: 20px;
+}
+
+.card {
+    background: #2c2c54;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Detalle del Cliente</h1>
+
+<div id="info"></div>
+
+<script>
+
+// obtener ID desde la URL
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+// traer clientes del backend
+fetch('http://localhost:3000/clientes')
+.then(res => res.json())
+.then(data => {
+    let cliente = data.find(c => c.id == id);
+
+    document.getElementById('info').innerHTML = `
+        <div class="card">
+            <h2>${cliente.nombre}</h2>
+            <p>Teléfono: ${cliente.telefono}</p>
+            <p>Saldo: $${cliente.saldo}</p>
+        </div>
+    `;
+});
+</script>
+
+</body>
+</html>

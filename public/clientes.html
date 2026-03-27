@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Clientes - El Buen Precio</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    background: #1e1e2f;
+    color: white;
+    height: 100vh;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    text-align: center;
+}
+
+.sidebar a {
+    display: block;
+    color: #ccc;
+    padding: 10px;
+    text-decoration: none;
+    margin-top: 10px;
+}
+
+.sidebar a:hover {
+    background: #00cec9;
+    color: white;
+}
+
+/* CONTENIDO */
+.content {
+    flex: 1;
+    padding: 20px;
+    background: #f5f6fa;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+    box-shadow: 0px 5px 10px rgba(0,0,0,0.1);
+}
+
+/* BOTONES */
+button {
+    background: #00cec9;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 5px 5px 0 0;
+}
+
+button:hover {
+    background: #00b894;
+}
+
+#formulario input {
+    display: block;
+    margin: 5px 0;
+    padding: 8px;
+    width: 200px;
+}
+
+/* BUSCADOR */
+#buscador {
+    padding: 8px;
+    width: 300px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* DETALLE */
+#detalleCliente {
+    display: none;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>🛒 El Buen Precio</h2>
+
+    <!--  SOLO ESTO SE AGREGÓ -->
+    <a href="dashboard.html">🏠 Inicio</a>
+    <a href="clientes.html">👥 Clientes</a>
+    <a href="creditos.html">💳 Créditos</a>
+    <a href="abonos.html">💰 Abonos</a>
+    <a href="cartera.html">📊 Cartera</a>
+</div>
+
+<div class="content">
+    <h1>Clientes</h1>
+
+    <button onclick="mostrarFormulario(true)">+ Agregar Cliente</button>
+
+    <input type="text" id="buscador" placeholder="Buscar por nombre o cédula" onkeyup="buscarClientes()">
+
+    <!-- FORMULARIO -->
+    <div id="formulario" style="display:none;">
+        <input type="text" id="nuevoNombre" placeholder="Nombre">
+        <input type="text" id="nuevoApellido1" placeholder="Apellido 1">
+        <input type="text" id="nuevoApellido2" placeholder="Apellido 2">
+        <input type="number" id="nuevoCedula" placeholder="Cédula">
+        <input type="text" id="nuevoTelefono" placeholder="Teléfono">
+        <input type="number" id="nuevoSaldo" placeholder="Saldo">
+        <input type="text" id="nuevoEstado" placeholder="Estado">
+        <button id="guardarBtn" onclick="crearCliente()">Guardar</button>
+    </div>
+
+    <!-- LISTA -->
+    <div id="clientes"></div>
+
+    <!-- DETALLE -->
+    <div id="detalleCliente">
+        <h2>Detalle del Cliente</h2>
+        <p id="detalleNombre"></p>
+        <p id="detalleCedula"></p>
+        <p id="detalleTelefono"></p>
+        <p id="detalleSaldo"></p>
+        <p id="detalleEstado"></p>
+        <button onclick="cerrarDetalle()">Regresar</button>
+    </div>
+</div>
+
+<script>
+
+let clienteActual = null;
+let clientesData = [];
+
+function mostrarFormulario(soloCrear = false) {
+    document.getElementById('formulario').style.display = 'block';
+    if(soloCrear){
+        document.getElementById('clientes').style.display = 'none';
+        document.getElementById('detalleCliente').style.display = 'none';
+        limpiarFormulario();
+    }
+}
+
+function cargarClientes() {
+    fetch('http://localhost:3000/clientes')
+    .then(res => res.json())
+    .then(data => {
+        clientesData = data;
+        const contenedor = document.getElementById('clientes');
+        contenedor.innerHTML = '';
+
+        data.forEach(cliente => {
+            contenedor.innerHTML += `
+                <div class="card">
+                    <h3>${cliente.nombre} ${cliente.apellido1} ${cliente.apellido2}</h3>
+                    <p>Saldo: $${cliente.saldo}</p>
+                    <p>Estado: ${cliente.estado}</p>
+
+                    <button onclick="verCliente(${cliente.id})">Ver</button>
+                    <button onclick="editarCliente(${cliente.id})">Editar</button>
+                    <button onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+                </div>
+            `;
+        });
+    });
+}
+cargarClientes();
+
+function verCliente(id) {
+    const cliente = clientesData.find(c => c.id === id);
+
+    document.getElementById('clientes').style.display = 'none';
+    document.getElementById('detalleCliente').style.display = 'block';
+
+    document.getElementById('detalleNombre').innerText = "Nombre: " + cliente.nombre;
+    document.getElementById('detalleCedula').innerText = "Cédula: " + cliente.cedula;
+    document.getElementById('detalleTelefono').innerText = "Teléfono: " + cliente.telefono;
+    document.getElementById('detalleSaldo').innerText = "Saldo: $" + cliente.saldo;
+    document.getElementById('detalleEstado').innerText = "Estado: " + cliente.estado;
+}
+
+function cerrarDetalle() {
+    document.getElementById('detalleCliente').style.display = 'none';
+    document.getElementById('clientes').style.display = 'block';
+}
+
+function crearCliente() {
+    const datos = {
+        nombre: nuevoNombre.value,
+        apellido1: nuevoApellido1.value,
+        apellido2: nuevoApellido2.value,
+        cedula: nuevoCedula.value,
+        telefono: nuevoTelefono.value,
+        saldo: nuevoSaldo.value,
+        estado: nuevoEstado.value
+    };
+
+    fetch('http://localhost:3000/clientes', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(datos)
+    }).then(()=> {
+        alert('Cliente creado');
+        cargarClientes();
+    });
+}
+
+function editarCliente(id) {
+    const cliente = clientesData.find(c => c.id === id);
+
+    clienteActual = id;
+    mostrarFormulario();
+
+    nuevoNombre.value = cliente.nombre;
+    nuevoApellido1.value = cliente.apellido1;
+    nuevoApellido2.value = cliente.apellido2;
+    nuevoCedula.value = cliente.cedula;
+    nuevoTelefono.value = cliente.telefono;
+    nuevoSaldo.value = cliente.saldo;
+    nuevoEstado.value = cliente.estado;
+}
+
+function eliminarCliente(id) {
+    fetch(`http://localhost:3000/clientes/${id}`, {method:'DELETE'})
+    .then(()=> {
+        alert('Eliminado');
+        cargarClientes();
+    });
+}
+
+function limpiarFormulario(){
+    nuevoNombre.value = '';
+    nuevoApellido1.value = '';
+    nuevoApellido2.value = '';
+    nuevoCedula.value = '';
+    nuevoTelefono.value = '';
+    nuevoSaldo.value = '';
+    nuevoEstado.value = '';
+}
+
+function buscarClientes() {
+    const filtro = buscador.value.toLowerCase();
+    const contenedor = document.getElementById('clientes');
+    contenedor.innerHTML = '';
+
+    clientesData.filter(c =>
+        `${c.nombre} ${c.apellido1} ${c.apellido2}`.toLowerCase().includes(filtro)
+        || c.cedula.includes(filtro)
+    ).forEach(cliente => {
+        contenedor.innerHTML += `
+            <div class="card">
+                <h3>${cliente.nombre} ${cliente.apellido1} ${cliente.apellido2}</h3>
+                <p>Saldo: $${cliente.saldo}</p>
+                <p>Estado: ${cliente.estado}</p>
+                <button onclick="verCliente(${cliente.id})">Ver</button>
+                <button onclick="editarCliente(${cliente.id})">Editar</button>
+                <button onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+            </div>
+        `;
+    });
+}
+
+</script>
+
+</body>
+</html>

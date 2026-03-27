@@ -1,0 +1,248 @@
+<!DOCTYPE html> 
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Créditos - El Buen Precio</title>
+
+<style>
+body { margin:0; font-family:Arial; display:flex; }
+
+.sidebar {
+    width:220px; background:#1e1e2f; color:white;
+    height:100vh; padding:20px;
+}
+
+.sidebar a {
+    display:block; color:#ccc; padding:10px;
+    text-decoration:none; margin-top:10px;
+}
+
+.sidebar a:hover { background:#00cec9; color:white; }
+
+.content {
+    flex:1; padding:20px; background:#f5f6fa;
+}
+
+.card {
+    background:white; padding:15px; margin:10px 0;
+    border-radius:10px; box-shadow:0px 5px 10px rgba(0,0,0,0.1);
+}
+
+button {
+    background:#00cec9; color:white; border:none;
+    padding:8px 12px; border-radius:6px; cursor:pointer;
+    margin-top:5px;
+}
+
+button:hover { background:#00b894; }
+
+input, select {
+    display:block; margin:5px 0; padding:8px; width:220px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🛒 El Buen Precio</h2>
+
+    <!--  SOLO ESTO SE AGREGÓ -->
+    <a href="dashboard.html">🏠 Inicio</a>
+    <a href="clientes.html">👥 Clientes</a>
+    <a href="creditos.html">💳 Créditos</a>
+    <a href="abonos.html">💰 Abonos</a>
+    <a href="cartera.html">📊 Cartera</a>
+</div>
+
+<div class="content">
+    <h1>Créditos</h1>
+
+    <button onclick="mostrarFormulario()">➕ Registrar crédito a un NUEVO cliente</button>
+
+    <div id="formulario" style="display:none;">
+        <input type="text" id="buscadorCliente" placeholder="Buscar cliente..." onkeyup="filtrarClientes()">
+
+        <select id="clienteId"></select>
+
+        <input type="text" id="producto" placeholder="Producto">
+        <input type="number" id="monto" placeholder="Monto">
+        <button onclick="crearCredito()">Guardar</button>
+    </div>
+
+    <div id="creditos"></div>
+</div>
+
+<script>
+
+let listaClientes = [];
+let creditosAgrupados = [];
+
+// MOSTRAR FORM
+function mostrarFormulario(){
+    let f = document.getElementById('formulario');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+// CLIENTES
+function cargarClientes(){
+    fetch('http://localhost:3000/clientes')
+    .then(r=>r.json())
+    .then(data=>{
+        listaClientes = data;
+        renderClientes(data);
+    });
+}
+
+// CORREGIDO
+function renderClientes(data){
+    const select = document.getElementById('clienteId');
+
+    const seleccionado = select.value;
+
+    select.innerHTML = '<option value="">Seleccionar cliente</option>';
+
+    data.forEach(c=>{
+        select.innerHTML += `
+            <option value="${c.id}">
+                ${c.nombre} ${c.apellido1} ${c.apellido2} - ${c.cedula}
+            </option>`;
+    });
+
+    select.value = seleccionado;
+}
+
+// CORREGIDO
+function filtrarClientes(){
+    const txt = document.getElementById('buscadorCliente').value.toLowerCase();
+
+    const filtrados = listaClientes.filter(c=>{
+        const nombre = `${c.nombre} ${c.apellido1} ${c.apellido2}`.toLowerCase();
+        const cedula = String(c.cedula);
+
+        return nombre.includes(txt) || cedula.includes(txt);
+    });
+
+    renderClientes(filtrados);
+}
+
+// CREDITOS
+function cargarCreditos(){
+    fetch('http://localhost:3000/creditos')
+    .then(r=>r.json())
+    .then(data=>{
+
+        const cont = document.getElementById('creditos');
+        cont.innerHTML = '';
+        creditosAgrupados = {};
+
+        data.forEach(c=>{
+            if(!creditosAgrupados[c.clienteId]){
+                creditosAgrupados[c.clienteId] = {
+                    nombre: `${c.nombre} ${c.apellido1} ${c.apellido2}`,
+                    total:0,
+                    creditos:[]
+                };
+            }
+
+            creditosAgrupados[c.clienteId].total += parseFloat(c.monto);
+            creditosAgrupados[c.clienteId].creditos.push(c);
+        });
+
+        Object.keys(creditosAgrupados).forEach(id=>{
+            const cl = creditosAgrupados[id];
+
+            cont.innerHTML += `
+            <div class="card">
+                <h3>${cl.nombre}</h3>
+                <p><strong>Total: $${cl.total}</strong></p>
+
+                <button onclick="agregarCreditoDirecto(${id})">➕ Crédito</button>
+                <button onclick="abonoGeneral(${id})">💰 Abonar</button>
+                <button onclick="verDetalle(${id})">Ver detalle</button>
+
+                <div id="detalle-${id}" style="display:none;"></div>
+            </div>`;
+        });
+    });
+}
+
+// DETALLE
+function verDetalle(id){
+    const div = document.getElementById(`detalle-${id}`);
+    const cliente = creditosAgrupados[id];
+
+    if(div.style.display === 'none'){
+        div.style.display = 'block';
+        div.innerHTML = '';
+
+        cliente.creditos.forEach(c=>{
+            div.innerHTML += `
+            <div style="background:#eee; padding:8px; margin:5px;">
+                ${c.producto} - $${c.monto}
+                <button onclick="eliminarCredito(${c.id})">Eliminar</button>
+            </div>`;
+        });
+
+    } else {
+        div.style.display = 'none';
+    }
+}
+
+// CREAR
+function crearCredito(){
+    const clienteId = document.getElementById('clienteId').value;
+    const producto = document.getElementById('producto').value;
+    const monto = document.getElementById('monto').value;
+
+    fetch('http://localhost:3000/creditos',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({clienteId, producto, monto})
+    }).then(()=>{
+        alert('Creado');
+        cargarCreditos();
+    });
+}
+
+// DIRECTO
+function agregarCreditoDirecto(id){
+    const producto = prompt("Producto:");
+    const monto = prompt("Monto:");
+
+    fetch('http://localhost:3000/creditos',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({clienteId:id, producto, monto})
+    }).then(()=>cargarCreditos());
+}
+
+// ABONO
+function abonoGeneral(id){
+    const monto = prompt("Monto a abonar");
+
+    fetch('http://localhost:3000/abonos/general',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({clienteId:id, monto})
+    }).then(()=>{
+        alert('Abono hecho');
+        cargarCreditos();
+    });
+}
+
+// ELIMINAR
+function eliminarCredito(id){
+    fetch(`http://localhost:3000/creditos/${id}`,{
+        method:'DELETE'
+    }).then(()=>cargarCreditos());
+}
+
+// INIT
+cargarClientes();
+cargarCreditos();
+
+</script>
+
+</body>
+</html>
