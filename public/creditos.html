@@ -39,6 +39,36 @@ button:hover { background:#00b894; }
 input, select {
     display:block; margin:5px 0; padding:8px; width:220px;
 }
+
+.toggle {
+    color:#0984e3;
+    cursor:pointer;
+    font-size:14px;
+    margin-top:5px;
+}
+
+/* RESPONSIVE ORIGINAL */
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+
+    .sidebar {
+        width:100%; height:auto; display:flex; overflow-x:auto;
+    }
+
+    .sidebar a {
+        flex:1; text-align:center; font-size:12px;
+    }
+
+    .content { padding:10px; }
+
+    input, select { width:100%; }
+}
+
+/* MEJORAS */
+@media (max-width: 768px) {
+    .card { padding:10px; }
+    .card button { width:100%; margin:5px 0; }
+}
 </style>
 </head>
 
@@ -47,24 +77,25 @@ input, select {
 <div class="sidebar">
     <h2>🛒 El Buen Precio</h2>
 
-    <!--  SOLO ESTO SE AGREGÓ -->
     <a href="dashboard.html">🏠 Inicio</a>
     <a href="clientes.html">👥 Clientes</a>
     <a href="creditos.html">💳 Créditos</a>
     <a href="abonos.html">💰 Abonos</a>
-    <a href="cartera.html">📊 Cartera</a>
+    <a href="cartera.html" class="menu-cartera">📊 Cartera</a>
+
+    <a href="#" onclick="cerrarSesion()">🚪 Cerrar sesión</a>
 </div>
 
 <div class="content">
     <h1>Créditos</h1>
 
+    <input type="text" id="buscadorCredito" placeholder="Buscar cliente por nombre o cédula..." onkeyup="filtrarCreditos()">
+
     <button onclick="mostrarFormulario()">➕ Registrar crédito a un NUEVO cliente</button>
 
     <div id="formulario" style="display:none;">
         <input type="text" id="buscadorCliente" placeholder="Buscar cliente..." onkeyup="filtrarClientes()">
-
         <select id="clienteId"></select>
-
         <input type="text" id="producto" placeholder="Producto">
         <input type="number" id="monto" placeholder="Monto">
         <button onclick="crearCredito()">Guardar</button>
@@ -77,8 +108,19 @@ input, select {
 
 let listaClientes = [];
 let creditosAgrupados = [];
+let copiaOriginalCreditos = {};
+let mostrarHistorial = {};
 
-// MOSTRAR FORM
+const rol = localStorage.getItem("rol");
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (rol === "cajera") {
+        document.querySelectorAll(".menu-cartera").forEach(el => {
+            el.style.display = "none";
+        });
+    }
+});
+
 function mostrarFormulario(){
     let f = document.getElementById('formulario');
     f.style.display = f.style.display === 'none' ? 'block' : 'none';
@@ -94,10 +136,8 @@ function cargarClientes(){
     });
 }
 
-// CORREGIDO
 function renderClientes(data){
     const select = document.getElementById('clienteId');
-
     const seleccionado = select.value;
 
     select.innerHTML = '<option value="">Seleccionar cliente</option>';
@@ -112,14 +152,12 @@ function renderClientes(data){
     select.value = seleccionado;
 }
 
-// CORREGIDO
 function filtrarClientes(){
     const txt = document.getElementById('buscadorCliente').value.toLowerCase();
 
     const filtrados = listaClientes.filter(c=>{
         const nombre = `${c.nombre} ${c.apellido1} ${c.apellido2}`.toLowerCase();
         const cedula = String(c.cedula);
-
         return nombre.includes(txt) || cedula.includes(txt);
     });
 
@@ -132,14 +170,14 @@ function cargarCreditos(){
     .then(r=>r.json())
     .then(data=>{
 
-        const cont = document.getElementById('creditos');
-        cont.innerHTML = '';
         creditosAgrupados = {};
+        copiaOriginalCreditos = {};
 
         data.forEach(c=>{
             if(!creditosAgrupados[c.clienteId]){
                 creditosAgrupados[c.clienteId] = {
                     nombre: `${c.nombre} ${c.apellido1} ${c.apellido2}`,
+                     cedula: c.cedula,
                     total:0,
                     creditos:[]
                 };
@@ -149,22 +187,54 @@ function cargarCreditos(){
             creditosAgrupados[c.clienteId].creditos.push(c);
         });
 
-        Object.keys(creditosAgrupados).forEach(id=>{
-            const cl = creditosAgrupados[id];
+        copiaOriginalCreditos = JSON.parse(JSON.stringify(creditosAgrupados));
 
-            cont.innerHTML += `
-            <div class="card">
-                <h3>${cl.nombre}</h3>
-                <p><strong>Total: $${cl.total}</strong></p>
-
-                <button onclick="agregarCreditoDirecto(${id})">➕ Crédito</button>
-                <button onclick="abonoGeneral(${id})">💰 Abonar</button>
-                <button onclick="verDetalle(${id})">Ver detalle</button>
-
-                <div id="detalle-${id}" style="display:none;"></div>
-            </div>`;
-        });
+        renderCreditos(creditosAgrupados);
     });
+}
+
+// RENDER
+function renderCreditos(data){
+    const cont = document.getElementById('creditos');
+    cont.innerHTML = '';
+
+    Object.keys(data).forEach(id=>{
+        const cl = data[id];
+
+        if(cl.total <= 0) return;
+
+        cont.innerHTML += `
+        <div class="card">
+            <h3>${cl.nombre}</h3>
+            <p><strong>Total: $${cl.total}</strong></p>
+
+            <button onclick="agregarCreditoDirecto(${id})">➕ Crédito</button>
+            <button onclick="abonoGeneral(${id})">💰 Abonar</button>
+            <button onclick="verDetalle(${id})">Ver detalle</button>
+
+            <div id="detalle-${id}" style="display:none;"></div>
+        </div>`;
+    });
+}
+
+// BUSCADOR
+function filtrarCreditos(){
+    const txt = document.getElementById('buscadorCredito').value.toLowerCase();
+
+    const filtrados = {};
+
+    Object.keys(copiaOriginalCreditos).forEach(id=>{
+        const cl = copiaOriginalCreditos[id];
+
+        const nombre = cl.nombre.toLowerCase();
+        const cedula = String(cl.cedula || "");
+
+        if(nombre.includes(txt) || cedula.includes(txt)){
+            filtrados[id] = cl;
+        }
+    });
+
+    renderCreditos(filtrados);
 }
 
 // DETALLE
@@ -174,19 +244,54 @@ function verDetalle(id){
 
     if(div.style.display === 'none'){
         div.style.display = 'block';
-        div.innerHTML = '';
-
-        cliente.creditos.forEach(c=>{
-            div.innerHTML += `
-            <div style="background:#eee; padding:8px; margin:5px;">
-                ${c.producto} - $${c.monto}
-                <button onclick="eliminarCredito(${c.id})">Eliminar</button>
-            </div>`;
-        });
-
     } else {
         div.style.display = 'none';
+        return;
     }
+
+    renderDetalle(id);
+}
+
+// RENDER DETALLE
+function renderDetalle(id){
+    const div = document.getElementById(`detalle-${id}`);
+    const cliente = creditosAgrupados[id];
+
+    div.innerHTML = `
+        <span class="toggle" onclick="event.stopPropagation(); toggleHistorial(${id})">
+            ${mostrarHistorial[id] ? '📜 Ocultar historial' : '📜 Ver historial'}
+        </span>
+    `;
+
+    let lista = cliente.creditos;
+
+    if(!mostrarHistorial[id]){
+        lista = lista.filter(c => c.estado === "pendiente");
+    }
+
+    if(lista.length === 0){
+        div.innerHTML += `<p style="color:green;">✅ Cliente al día</p>`;
+    }
+
+    lista.forEach(c=>{
+        div.innerHTML += `
+        <div style="background:${c.estado === 'pagado' ? '#dfe6e9' : '#eee'}; padding:8px; margin:5px;">
+            ${c.producto} - $${c.monto}<br>
+
+            <strong style="color:${c.estado === 'pagado' ? 'green' : 'red'}">
+                ${c.estado === 'pagado' ? 'PAGADO' : 'PENDIENTE'}
+            </strong><br>
+
+            📅 ${new Date(c.fecha).toLocaleString()}<br>
+            <button onclick="eliminarCredito(${c.id})">Eliminar</button>
+        </div>`;
+    });
+}
+
+// TOGGLE
+function toggleHistorial(id){
+    mostrarHistorial[id] = !mostrarHistorial[id];
+    renderDetalle(id);
 }
 
 // CREAR
@@ -195,20 +300,32 @@ function crearCredito(){
     const producto = document.getElementById('producto').value;
     const monto = document.getElementById('monto').value;
 
+    if(!clienteId || !producto || !monto){
+        alert("Completa todos los campos");
+        return;
+    }
+
     fetch('http://localhost:3000/creditos',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({clienteId, producto, monto})
     }).then(()=>{
-        alert('Creado');
+        alert('Credito creado');
+
+        document.getElementById('producto').value = '';
+        document.getElementById('monto').value = '';
+        document.getElementById('formulario').style.display = 'none';
+
         cargarCreditos();
     });
 }
 
-// DIRECTO
 function agregarCreditoDirecto(id){
     const producto = prompt("Producto:");
+    if(!producto) return;
+
     const monto = prompt("Monto:");
+    if(!monto) return;
 
     fetch('http://localhost:3000/creditos',{
         method:'POST',
@@ -217,9 +334,9 @@ function agregarCreditoDirecto(id){
     }).then(()=>cargarCreditos());
 }
 
-// ABONO
 function abonoGeneral(id){
     const monto = prompt("Monto a abonar");
+    if(!monto) return;
 
     fetch('http://localhost:3000/abonos/general',{
         method:'POST',
@@ -231,7 +348,6 @@ function abonoGeneral(id){
     });
 }
 
-// ELIMINAR
 function eliminarCredito(id){
     fetch(`http://localhost:3000/creditos/${id}`,{
         method:'DELETE'
@@ -241,6 +357,11 @@ function eliminarCredito(id){
 // INIT
 cargarClientes();
 cargarCreditos();
+
+function cerrarSesion(){
+    localStorage.removeItem('usuario');
+    window.location.href = "login.html";
+}
 
 </script>
 

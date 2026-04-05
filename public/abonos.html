@@ -37,6 +37,39 @@ body { margin:0; font-family:Arial; display:flex; }
     color:#00b894;
     font-weight:bold;
 }
+
+/*  BUSCADOR */
+#buscador {
+    padding:10px;
+    width:250px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    margin-bottom:15px;
+}
+
+/*  RESPONSIVE  */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width:100%;
+        height:auto;
+        display:flex;
+        overflow-x:auto;
+    }
+
+    .sidebar a {
+        flex:1;
+        text-align:center;
+        font-size:12px;
+    }
+
+    .content {
+        padding:10px;
+    }
+}
 </style>
 </head>
 
@@ -47,43 +80,88 @@ body { margin:0; font-family:Arial; display:flex; }
     <a href="clientes.html">Clientes</a>
     <a href="creditos.html">Créditos</a>
     <a href="abonos.html">Abonos</a>
-    <a href="cartera.html">📊 Cartera</a>
+    <a href="cartera.html" class="menu-cartera">📊 Cartera</a>
+
+    <a href="#" onclick="cerrarSesion()">🚪 Cerrar sesión</a>
 </div>
 
 <div class="content">
     <h1 class="titulo">Historial de Abonos 💰</h1>
+
+    <!--  BUSCADOR -->
+    <input type="text" id="buscador" placeholder="Buscar por nombre o cédula..." onkeyup="filtrarAbonos()">
 
     <div id="lista"></div>
 </div>
 
 <script>
 
+let copiaAbonos = []; //  copia para filtrar
+
+const rol = localStorage.getItem("rol");
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    if (rol === "cajera") {
+        document.querySelectorAll(".menu-cartera").forEach(el => {
+            el.style.display = "none";
+        });
+    }
+
+});
+
 function cargarAbonos(){
     fetch('http://localhost:3000/abonos')
     .then(res => res.json())
     .then(data => {
 
-        const cont = document.getElementById('lista');
-        cont.innerHTML = '';
+        copiaAbonos = data; //  guardamos copia
 
-        if(data.length === 0){
-            cont.innerHTML = "<p>No hay abonos registrados</p>";
-            return;
-        }
-
-        data.forEach(a => {
-            cont.innerHTML += `
-                <div class="card">
-                    <h3>${a.nombre} ${a.apellido1} ${a.apellido2}</h3>
-                    <p class="monto">💰 $${a.monto}</p>
-                    <p>📅 ${new Date(a.fecha).toLocaleString()}</p>
-                </div>
-            `;
-        });
+        renderAbonos(data);
     });
 }
 
+//  RENDER (igual)
+function renderAbonos(data){
+    const cont = document.getElementById('lista');
+    cont.innerHTML = '';
+
+    if(data.length === 0){
+        cont.innerHTML = "<p>No hay abonos registrados</p>";
+        return;
+    }
+
+    data.forEach(a => {
+        cont.innerHTML += `
+            <div class="card">
+                <h3>${a.nombre} ${a.apellido1} ${a.apellido2}</h3>
+                <p class="monto">💰 $${a.monto}</p>
+                <p>📅 ${new Date(a.fecha).toLocaleString()}</p>
+            </div>
+        `;
+    });
+}
+
+//  BUSCADOR MEJORADO
+function filtrarAbonos(){
+    const txt = document.getElementById('buscador').value.toLowerCase();
+
+    const filtrados = copiaAbonos.filter(a=>{
+        const nombre = `${a.nombre} ${a.apellido1} ${a.apellido2}`.toLowerCase();
+        const cedula = String(a.cedula || ""); // 👈 por si no viene
+
+        return nombre.includes(txt) || cedula.includes(txt);
+    });
+
+    renderAbonos(filtrados);
+}
+
 cargarAbonos();
+
+function cerrarSesion(){
+    localStorage.removeItem('usuario');
+    window.location.href = "login.html";
+}
 
 </script>
 

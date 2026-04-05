@@ -4,14 +4,19 @@
 <meta charset="UTF-8">
 <title>El Buen Precio - Dashboard</title>
 
+<!--  RESPONSIVE -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
+
+/* GENERAL */
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     display: flex;
 }
 
-/* SIDEBAR */
+/* SIDEBAR (SE CONSERVA) */
 .sidebar {
     width: 220px;
     background: #1e1e2f;
@@ -30,6 +35,8 @@ body {
     padding: 10px;
     text-decoration: none;
     margin-top: 10px;
+    border-radius: 8px;
+    transition: 0.3s;
 }
 
 .sidebar a:hover {
@@ -40,54 +47,122 @@ body {
 /* CONTENIDO */
 .content {
     flex: 1;
-    padding: 40px;
-    background: #f5f6fa;
+    padding: 50px;
+    background: linear-gradient(135deg, #f5f6fa, #dfe6e9);
 }
 
-/* BIENVENIDA */
+/* TARJETA BIENVENIDA */
 .welcome {
     background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.1);
     text-align: center;
+    animation: fadeIn 0.6s ease;
+}
+
+/* ANIMACIÓN */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .welcome h1 {
     color: #2d3436;
+    font-size: 34px;
+    margin-bottom: 10px;
 }
 
 .welcome p {
     color: #636e72;
-    font-size: 18px;
+    font-size: 17px;
     margin-top: 10px;
 }
 
-/* TARJETAS RÁPIDAS */
+/* BOTONES */
 .quick {
     display: flex;
-    gap: 20px;
-    margin-top: 30px;
+    gap: 25px;
+    margin-top: 35px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .quick a {
     background: #00cec9;
     color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
+    padding: 18px 30px;
+    border-radius: 12px;
     text-decoration: none;
     font-weight: bold;
+    font-size: 16px;
+    transition: 0.3s;
+    box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
 }
 
 .quick a:hover {
     background: #00b894;
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0px 12px 25px rgba(0,0,0,0.25);
 }
+
+/*  RESPONSIVE */
+@media (max-width: 768px) {
+
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        display: flex;
+        overflow-x: auto;
+    }
+
+    .sidebar h2 {
+        display: none;
+    }
+
+    .sidebar a {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+    }
+
+    .content {
+        padding: 25px;
+    }
+
+    .welcome {
+        padding: 25px;
+    }
+
+    .welcome h1 {
+        font-size: 24px;
+    }
+
+    .welcome p {
+        font-size: 15px;
+    }
+
+    .quick {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .quick a {
+        width: 80%;
+        text-align: center;
+    }
+}
+
 </style>
 
 </head>
 <body>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
     <h2>🛒 El Buen Precio</h2>
 
@@ -95,23 +170,69 @@ body {
     <a href="creditos.html">💳 Créditos</a>
     <a href="abonos.html">💰 Abonos</a>
     <a href="cartera.html">📊 Cartera</a>
+    <a href="#" onclick="cerrarSesion()">🚪 Cerrar sesión</a>
 </div>
 
+<!-- CONTENIDO -->
 <div class="content">
+
     <div class="welcome">
-        <h1>Bienvenida al sistema 💼</h1>
+        <h1 id="bienvenida">Bienvenido, gestiona tu negocio 💼</h1>
         <p>Gestiona clientes, créditos y pagos de forma fácil y rápida.</p>
         <p><strong>Selecciona una opción del menú o usa accesos rápidos.</strong></p>
 
-        <!--  BOTONES RÁPIDOS -->
         <div class="quick">
             <a href="clientes.html">👥 Clientes</a>
             <a href="creditos.html">💳 Créditos</a>
             <a href="abonos.html">💰 Abonos</a>
-            <a href="cartera.html">📊 Cartera</a>
+            <a href="cartera.html" id="btnCartera">📊 Cartera</a>
         </div>
     </div>
+
 </div>
+
+<!-- SCRIPT -->
+<script>
+
+function mostrarBienvenida() {
+    const rol = localStorage.getItem("rol");
+    const mensaje = document.getElementById("bienvenida");
+
+    if (rol === "admin") {
+        mensaje.innerText = "👨‍💼 Bienvenido Administrador, gestiona tu negocio";
+    } else if (rol === "cajera") {
+        mensaje.innerText ="🧾 Bienvenida Cajera, gestiona la información del sistema";
+    }
+}
+
+function ocultarCartera() {
+    const rol = localStorage.getItem("rol");
+
+    if (rol === "cajera") {
+
+        // Menú lateral
+        const link = document.querySelector('a[href="cartera.html"]');
+        if (link) {
+            link.style.display = "none";
+        }
+
+        // Botón central
+        const btn = document.getElementById("btnCartera");
+        if (btn) {
+            btn.style.display = "none";
+        }
+    }
+}
+
+mostrarBienvenida();
+ocultarCartera();
+
+function cerrarSesion(){
+    localStorage.removeItem('usuario');
+    window.location.href = "login.html";
+}
+
+</script>
 
 </body>
 </html>

@@ -32,14 +32,34 @@ app.get('/', (req, res) => {
 
 // ================= CLIENTES =================
 
-// 1️⃣ Traer todos los clientes
 app.get('/clientes', (req, res) => {
-    db.query('SELECT * FROM clientes', (err, result) => {
+    db.query(`
+        SELECT 
+            c.id,
+            c.nombre,
+            c.apellido1,
+            c.apellido2,
+            c.cedula,
+            c.telefono,
+            c.estado,
+
+            IFNULL((
+                SELECT SUM(valor) 
+                FROM creditos 
+                WHERE cliente_id = c.id AND estado = "pendiente"
+            ),0) AS saldo,
+
+            MAX(ab.fecha) AS ultimaFecha
+
+        FROM clientes c
+        LEFT JOIN abonos ab ON c.id = ab.cliente_id
+
+        GROUP BY c.id
+    `, (err, result) => {
         if (err) res.send(err);
         else res.json(result);
     });
 });
-
 // 2️⃣ Crear cliente
 app.post('/clientes', (req, res) => {
     const { nombre, apellido1, apellido2, cedula, telefono, saldo, estado } = req.body;
@@ -67,23 +87,28 @@ app.put('/clientes/:id', (req, res) => {
     );
 });
 
-// 4️⃣ Eliminar cliente
+// OPCIONAL PERO RECOMENDADO (BORRADO CORRECTO)
 app.delete('/clientes/:id', (req, res) => {
     const { id } = req.params;
-    db.query(
-        'DELETE FROM clientes WHERE id=?',
-        [id],
-        (err, result) => {
-            if(err) res.send(err);
-            else res.json({ message: 'Cliente eliminado' });
-        }
-    );
+
+    db.query('DELETE FROM abonos WHERE cliente_id=?', [id], (err) => {
+        if (err) return res.send(err);
+
+        db.query('DELETE FROM creditos WHERE cliente_id=?', [id], (err) => {
+            if (err) return res.send(err);
+
+            db.query('DELETE FROM clientes WHERE id=?', [id], (err) => {
+                if (err) return res.send(err);
+
+                res.json({ message: 'Cliente eliminado correctamente ✅' });
+            });
+        });
+    });
 });
 
 
 // ================= CRÉDITOS =================
 
-//  1️⃣ Traer todos los créditos
 app.get('/creditos', (req, res) => {
     db.query(
         `SELECT 
@@ -92,9 +117,11 @@ app.get('/creditos', (req, res) => {
             creditos.producto,
             creditos.valor AS monto,
             creditos.estado,
+            creditos.fecha,
             clientes.nombre,
             clientes.apellido1,
-            clientes.apellido2
+            clientes.apellido2,
+            clientes.cedula
         FROM creditos
         JOIN clientes ON creditos.cliente_id = clientes.id`,
         (err, result) => {
@@ -104,7 +131,6 @@ app.get('/creditos', (req, res) => {
     );
 });
 
-//  2️⃣ Créditos por cliente
 app.get('/creditos/cliente/:id', (req, res) => {
     const { id } = req.params;
 
@@ -115,6 +141,7 @@ app.get('/creditos/cliente/:id', (req, res) => {
             creditos.producto,
             creditos.valor AS monto,
             creditos.estado,
+            creditos.fecha,
             clientes.nombre,
             clientes.apellido1,
             clientes.apellido2
@@ -129,7 +156,6 @@ app.get('/creditos/cliente/:id', (req, res) => {
     );
 });
 
-// 3️⃣ Crear crédito
 app.post('/creditos', (req, res) => {
     const { clienteId, producto, monto } = req.body;
 
@@ -143,7 +169,6 @@ app.post('/creditos', (req, res) => {
     );
 });
 
-// 4️⃣ Eliminar crédito
 app.delete('/creditos/:id', (req, res) => {
     const { id } = req.params;
 
@@ -158,7 +183,7 @@ app.delete('/creditos/:id', (req, res) => {
 });
 
 
-// =================  ABONO GENERAL =================
+// ================= ABONO GENERAL =================
 
 app.post('/abonos/general', (req, res) => {
     const { clienteId, monto } = req.body;
@@ -224,7 +249,6 @@ app.post('/abonos/general', (req, res) => {
 
 // ================= ABONOS =================
 
-// historial
 app.get('/abonos', (req, res) => {
     db.query(`
         SELECT 
@@ -233,7 +257,8 @@ app.get('/abonos', (req, res) => {
             abonos.fecha,
             clientes.nombre,
             clientes.apellido1,
-            clientes.apellido2
+            clientes.apellido2,
+            clientes.cedula  
         FROM abonos
         JOIN clientes ON abonos.cliente_id = clientes.id
         ORDER BY abonos.fecha DESC
@@ -244,7 +269,7 @@ app.get('/abonos', (req, res) => {
 });
 
 
-// ================= 💰 CARTERA =================
+// ================= CARTERA =================
 
 app.get('/cartera', (req, res) => {
 

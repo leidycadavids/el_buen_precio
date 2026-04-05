@@ -87,9 +87,77 @@ button:hover {
 #detalleCliente {
     display: none;
     background: white;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 30px;
+    border-radius: 15px;
     margin-top: 20px;
+
+    /* NUEVO */
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.1);
+    animation: fadeIn 0.4s ease;
+}
+
+/*  MEJOR TEXTO */
+#detalleCliente p {
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+/*  SALDO BONITO */
+#detalleSaldo {
+    color: #00b894;
+    font-weight: bold;
+}
+
+/*  ESTADO BONITO */
+#detalleEstado {
+    background: #dff9fb;
+    padding: 4px 10px;
+    border-radius: 8px;
+    display: inline-block;
+    color: #00b894;
+}
+
+/*  BOTÓN */
+#detalleCliente button {
+    width: 100%;
+    margin-top: 20px;
+}
+
+/*  ANIMACIÓN */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+
+    .sidebar {
+        width:100%;
+        height:auto;
+        display:flex;
+        overflow-x:auto;
+    }
+
+    .sidebar a {
+        flex:1;
+        text-align:center;
+        font-size:12px;
+    }
+
+    .content { padding:10px; }
+    #buscador { width:100%; }
+    #formulario input { width:100%; }
 }
 </style>
 
@@ -98,13 +166,13 @@ button:hover {
 
 <div class="sidebar">
     <h2>🛒 El Buen Precio</h2>
-
-    <!--  SOLO ESTO SE AGREGÓ -->
     <a href="dashboard.html">🏠 Inicio</a>
     <a href="clientes.html">👥 Clientes</a>
     <a href="creditos.html">💳 Créditos</a>
     <a href="abonos.html">💰 Abonos</a>
-    <a href="cartera.html">📊 Cartera</a>
+    <a href="cartera.html" class="menu-cartera">📊 Cartera</a>
+
+    <a href="#" onclick="cerrarSesion()">🚪 Cerrar sesión</a>
 </div>
 
 <div class="content">
@@ -114,22 +182,22 @@ button:hover {
 
     <input type="text" id="buscador" placeholder="Buscar por nombre o cédula" onkeyup="buscarClientes()">
 
-    <!-- FORMULARIO -->
     <div id="formulario" style="display:none;">
         <input type="text" id="nuevoNombre" placeholder="Nombre">
         <input type="text" id="nuevoApellido1" placeholder="Apellido 1">
         <input type="text" id="nuevoApellido2" placeholder="Apellido 2">
         <input type="number" id="nuevoCedula" placeholder="Cédula">
         <input type="text" id="nuevoTelefono" placeholder="Teléfono">
-        <input type="number" id="nuevoSaldo" placeholder="Saldo">
+
+        <!--  OCULTO -->
+        <input type="number" id="nuevoSaldo" style="display:none;">
+
         <input type="text" id="nuevoEstado" placeholder="Estado">
-        <button id="guardarBtn" onclick="crearCliente()">Guardar</button>
+        <button onclick="guardarCliente()">Guardar</button>
     </div>
 
-    <!-- LISTA -->
     <div id="clientes"></div>
 
-    <!-- DETALLE -->
     <div id="detalleCliente">
         <h2>Detalle del Cliente</h2>
         <p id="detalleNombre"></p>
@@ -146,12 +214,33 @@ button:hover {
 let clienteActual = null;
 let clientesData = [];
 
+const rol = localStorage.getItem("rol");
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    if (rol === "cajera") {
+        document.querySelectorAll(".menu-cartera").forEach(el => {
+            el.style.display = "none";
+        });
+    }
+
+});
+
+function ocultarBotonesEliminar() {
+    if (rol === "cajera") {
+        document.querySelectorAll(".btn-eliminar").forEach(btn => {
+            btn.style.display = "none";
+        });
+    }
+}
+
 function mostrarFormulario(soloCrear = false) {
-    document.getElementById('formulario').style.display = 'block';
+    formulario.style.display = 'block';
     if(soloCrear){
-        document.getElementById('clientes').style.display = 'none';
-        document.getElementById('detalleCliente').style.display = 'none';
+        clientes.style.display = 'none';
+        detalleCliente.style.display = 'none';
         limpiarFormulario();
+        clienteActual = null;
     }
 }
 
@@ -160,63 +249,85 @@ function cargarClientes() {
     .then(res => res.json())
     .then(data => {
         clientesData = data;
-        const contenedor = document.getElementById('clientes');
-        contenedor.innerHTML = '';
+        clientes.innerHTML = '';
 
         data.forEach(cliente => {
-            contenedor.innerHTML += `
+
+            let alerta = "";
+
+            if(cliente.ultimaFecha){
+                const hoy = new Date();
+                const ultima = new Date(cliente.ultimaFecha);
+
+                const dias = Math.floor((hoy - ultima) / (1000*60*60*24));
+
+                if(dias > 30){
+                    alerta = "⚠️ No paga hace " + dias + " días";
+                }
+            }else{
+                alerta = "⚠️ Nunca ha pagado";
+            }
+
+            clientes.innerHTML += `
                 <div class="card">
                     <h3>${cliente.nombre} ${cliente.apellido1} ${cliente.apellido2}</h3>
                     <p>Saldo: $${cliente.saldo}</p>
                     <p>Estado: ${cliente.estado}</p>
 
+                    <p style="color:red; font-weight:bold;">${alerta}</p>
+
                     <button onclick="verCliente(${cliente.id})">Ver</button>
                     <button onclick="editarCliente(${cliente.id})">Editar</button>
-                    <button onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+                    <button class="btn-eliminar" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
                 </div>
             `;
         });
+
+        ocultarBotonesEliminar();
     });
 }
 cargarClientes();
 
-function verCliente(id) {
-    const cliente = clientesData.find(c => c.id === id);
-
-    document.getElementById('clientes').style.display = 'none';
-    document.getElementById('detalleCliente').style.display = 'block';
-
-    document.getElementById('detalleNombre').innerText = "Nombre: " + cliente.nombre;
-    document.getElementById('detalleCedula').innerText = "Cédula: " + cliente.cedula;
-    document.getElementById('detalleTelefono').innerText = "Teléfono: " + cliente.telefono;
-    document.getElementById('detalleSaldo').innerText = "Saldo: $" + cliente.saldo;
-    document.getElementById('detalleEstado').innerText = "Estado: " + cliente.estado;
-}
-
-function cerrarDetalle() {
-    document.getElementById('detalleCliente').style.display = 'none';
-    document.getElementById('clientes').style.display = 'block';
-}
-
-function crearCliente() {
+function guardarCliente() {
     const datos = {
         nombre: nuevoNombre.value,
         apellido1: nuevoApellido1.value,
         apellido2: nuevoApellido2.value,
         cedula: nuevoCedula.value,
         telefono: nuevoTelefono.value,
-        saldo: nuevoSaldo.value,
+
+        //  FORZADO A 0
+        saldo: 0,
+
         estado: nuevoEstado.value
     };
 
-    fetch('http://localhost:3000/clientes', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(datos)
-    }).then(()=> {
-        alert('Cliente creado');
-        cargarClientes();
-    });
+    if(clienteActual){
+        fetch(`http://localhost:3000/clientes/${clienteActual}`, {
+            method:'PUT',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(datos)
+        }).then(()=>{
+            alert('Cliente actualizado');
+            finalizar();
+        });
+    } else {
+        fetch('http://localhost:3000/clientes', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(datos)
+        }).then(()=>{
+            alert('Cliente creado');
+            finalizar();
+        });
+    }
+}
+
+function finalizar(){
+    formulario.style.display = 'none';
+    clientes.style.display = 'block';
+    cargarClientes();
+    clienteActual = null;
 }
 
 function editarCliente(id) {
@@ -235,11 +346,52 @@ function editarCliente(id) {
 }
 
 function eliminarCliente(id) {
+
+    const rol = localStorage.getItem("rol");
+
+    if (rol !== "admin") {
+        alert("❌ No tienes permiso para eliminar clientes");
+        return;
+    }
+
+    if(!confirm("¿Estás seguro de eliminar este cliente?")) return;
+
     fetch(`http://localhost:3000/clientes/${id}`, {method:'DELETE'})
-    .then(()=> {
-        alert('Eliminado');
+    .then(res => res.json())
+    .then(data => {
+        if(data.error){
+            alert("No puedes eliminar este cliente porque tiene créditos o abonos");
+            return;
+        }
+
+        alert(' Cliente eliminado correctamente');
         cargarClientes();
     });
+}
+
+function verCliente(id) {
+    const cliente = clientesData.find(c => c.id === id);
+
+    clientes.style.display = 'none';
+    detalleCliente.style.display = 'block';
+
+    //  NOMBRE COMPLETO
+    const nombreCompleto = [
+        cliente.nombre,
+        cliente.apellido1,
+        cliente.apellido2
+    ].filter(Boolean).join(' ');
+
+    detalleNombre.innerText = "Nombre: " + nombreCompleto;
+    detalleCedula.innerText = "Cédula: " + cliente.cedula;
+    detalleTelefono.innerText = "Teléfono: " + cliente.telefono;
+    detalleSaldo.innerText = "Saldo: $" + cliente.saldo;
+    detalleEstado.innerText = "Estado: " + cliente.estado;
+}
+
+function cerrarDetalle() {
+    detalleCliente.style.display = 'none';
+    clientes.style.display = 'block';
 }
 
 function limpiarFormulario(){
@@ -254,24 +406,49 @@ function limpiarFormulario(){
 
 function buscarClientes() {
     const filtro = buscador.value.toLowerCase();
-    const contenedor = document.getElementById('clientes');
-    contenedor.innerHTML = '';
+    clientes.innerHTML = '';
 
     clientesData.filter(c =>
         `${c.nombre} ${c.apellido1} ${c.apellido2}`.toLowerCase().includes(filtro)
         || c.cedula.includes(filtro)
     ).forEach(cliente => {
-        contenedor.innerHTML += `
+
+        let alerta = "";
+
+        if(cliente.ultimaFecha){
+            const hoy = new Date();
+            const ultima = new Date(cliente.ultimaFecha);
+
+            const dias = Math.floor((hoy - ultima) / (1000*60*60*24));
+
+            if(dias > 30){
+                alerta = "⚠️ No paga hace " + dias + " días";
+            }
+        }else{
+            alerta = "⚠️ Nunca ha pagado";
+        }
+
+        clientes.innerHTML += `
             <div class="card">
                 <h3>${cliente.nombre} ${cliente.apellido1} ${cliente.apellido2}</h3>
                 <p>Saldo: $${cliente.saldo}</p>
                 <p>Estado: ${cliente.estado}</p>
+
+                <p style="color:red; font-weight:bold;">${alerta}</p>
+
                 <button onclick="verCliente(${cliente.id})">Ver</button>
                 <button onclick="editarCliente(${cliente.id})">Editar</button>
-                <button onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+                <button class="btn-eliminar" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
             </div>
         `;
     });
+
+    ocultarBotonesEliminar();
+}
+
+function cerrarSesion(){
+    localStorage.removeItem('usuario');
+    window.location.href = "login.html";
 }
 
 </script>

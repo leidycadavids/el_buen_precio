@@ -50,6 +50,29 @@ body { margin:0; font-family:Arial; display:flex; }
 .creditos { border-left:8px solid #00b894; }
 .abonos { border-left:8px solid #d63031; }
 
+/* 🔥 RESPONSIVE (AGREGADO) */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width:100%;
+        height:auto;
+        display:flex;
+        overflow-x:auto;
+    }
+
+    .sidebar a {
+        flex:1;
+        text-align:center;
+        font-size:12px;
+    }
+
+    .content {
+        padding:10px;
+    }
+}
 </style>
 </head>
 
@@ -61,6 +84,8 @@ body { margin:0; font-family:Arial; display:flex; }
     <a href="creditos.html">💳 Créditos</a>
     <a href="abonos.html">💰 Abonos</a>
     <a href="cartera.html">📊 Cartera</a>
+
+    <a href="#" onclick="cerrarSesion()">🚪 Cerrar sesión</a>
 </div>
 
 <div class="content">
@@ -99,6 +124,13 @@ function cargarCartera(){
 }
 
 cargarCartera();
+
+
+
+function cerrarSesion(){
+    localStorage.removeItem('usuario');
+    window.location.href = "login.html";
+}
 
 </script>
 
