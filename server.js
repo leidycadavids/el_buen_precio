@@ -1,32 +1,41 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-//  ESTA ES LA ÚNICA LÍNEA NUEVA
+// servir frontend
 app.use(express.static(__dirname + '/public'));
 
-// conexión a MySQL
+
+// =======================
+// CONEXIÓN MYSQL (HÍBRIDA)
+// =======================
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '123456',
-    database: 'el_buen_precio'
+    host: process.env.MYSQLHOST || 'localhost',
+    user: process.env.MYSQLUSER || 'root',
+    password: process.env.MYSQLPASSWORD || '123456',
+    database: process.env.MYSQLDATABASE || 'el_buen_precio',
+    port: process.env.MYSQLPORT || 3306
 });
 
+// conectar a la base de datos
 db.connect(err => {
     if (err) {
-        console.error('Error de conexión:', err);
+        console.error('❌ Error de conexión:', err);
     } else {
-        console.log('Conectado a MySQL ');
+        console.log('✅ Conectado a MySQL');
     }
 });
 
-// ruta de prueba
+
+// =======================
+// RUTA DE PRUEBA
+// =======================
 app.get('/', (req, res) => {
-    res.send('Servidor funcionando ');
+    res.send('Servidor funcionando 🚀');
 });
 
 
@@ -60,7 +69,7 @@ app.get('/clientes', (req, res) => {
         else res.json(result);
     });
 });
-// 2️⃣ Crear cliente
+
 app.post('/clientes', (req, res) => {
     const { nombre, apellido1, apellido2, cedula, telefono, saldo, estado } = req.body;
     db.query(
@@ -73,7 +82,6 @@ app.post('/clientes', (req, res) => {
     );
 });
 
-// 3️⃣ Actualizar cliente
 app.put('/clientes/:id', (req, res) => {
     const { id } = req.params;
     const { nombre, apellido1, apellido2, cedula, telefono, saldo, estado } = req.body;
@@ -87,7 +95,6 @@ app.put('/clientes/:id', (req, res) => {
     );
 });
 
-// OPCIONAL PERO RECOMENDADO (BORRADO CORRECTO)
 app.delete('/clientes/:id', (req, res) => {
     const { id } = req.params;
 
@@ -297,6 +304,12 @@ app.get('/cartera', (req, res) => {
 
 });
 
-app.listen(3000, () => {
-    console.log('Servidor en http://localhost:3000');
+
+// =======================
+// PUERTO (SOLO ESTE)
+// =======================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log("Servidor en puerto " + PORT);
 });
