@@ -40,7 +40,6 @@ app.get('/', (req, res) => {
 
 
 // ================= CLIENTES =================
-
 app.get('/clientes', (req, res) => {
     db.query(`
         SELECT 
@@ -58,12 +57,13 @@ app.get('/clientes', (req, res) => {
                 WHERE cliente_id = c.id AND estado = "pendiente"
             ),0) AS saldo,
 
-            MAX(ab.fecha) AS ultimaFecha
+            (
+                SELECT MAX(fecha)
+                FROM abonos
+                WHERE cliente_id = c.id
+            ) AS ultimaFecha
 
         FROM clientes c
-        LEFT JOIN abonos ab ON c.id = ab.cliente_id
-
-        GROUP BY c.id
     `, (err, result) => {
         if (err) res.send(err);
         else res.json(result);
