@@ -50,7 +50,7 @@ body { margin:0; font-family:Arial; display:flex; }
 .creditos { border-left:8px solid #00b894; }
 .abonos { border-left:8px solid #d63031; }
 
-/* 🔥 RESPONSIVE (AGREGADO) */
+/*  RESPONSIVE (AGREGADO) */
 @media (max-width: 768px) {
     body {
         flex-direction: column;
@@ -110,9 +110,9 @@ body { margin:0; font-family:Arial; display:flex; }
 
 <script>
 
-// 🔥 CARGAR CARTERA
+//  CARGAR CARTERA
 function cargarCartera(){
-    fetch('http://localhost:3000/cartera')
+    fetch('/cartera')
     .then(res => res.json())
     .then(data => {
 

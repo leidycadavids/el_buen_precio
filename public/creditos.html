@@ -128,7 +128,7 @@ function mostrarFormulario(){
 
 // CLIENTES
 function cargarClientes(){
-    fetch('http://localhost:3000/clientes')
+    fetch('/clientes')
     .then(r=>r.json())
     .then(data=>{
         listaClientes = data;
@@ -166,7 +166,7 @@ function filtrarClientes(){
 
 // CREDITOS
 function cargarCreditos(){
-    fetch('http://localhost:3000/creditos')
+    fetch('/creditos')
     .then(r=>r.json())
     .then(data=>{
 
@@ -295,7 +295,7 @@ function toggleHistorial(id){
 }
 
 // CREAR
-function crearCredito(){
+function crearCredito(){ 
     const clienteId = document.getElementById('clienteId').value;
     const producto = document.getElementById('producto').value;
     const monto = document.getElementById('monto').value;
@@ -305,7 +305,7 @@ function crearCredito(){
         return;
     }
 
-    fetch('http://localhost:3000/creditos',{
+    fetch('/creditos', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({clienteId, producto, monto})
@@ -327,7 +327,7 @@ function agregarCreditoDirecto(id){
     const monto = prompt("Monto:");
     if(!monto) return;
 
-    fetch('http://localhost:3000/creditos',{
+    fetch('/creditos',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({clienteId:id, producto, monto})
@@ -338,7 +338,7 @@ function abonoGeneral(id){
     const monto = prompt("Monto a abonar");
     if(!monto) return;
 
-    fetch('http://localhost:3000/abonos/general',{
+    fetch('/abonos/general',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({clienteId:id, monto})
@@ -349,7 +349,7 @@ function abonoGeneral(id){
 }
 
 function eliminarCredito(id){
-    fetch(`http://localhost:3000/creditos/${id}`,{
+    fetch(`/creditos/${id}`,{
         method:'DELETE'
     }).then(()=>cargarCreditos());
 }
