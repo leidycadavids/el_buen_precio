@@ -245,7 +245,7 @@ function mostrarFormulario(soloCrear = false) {
 }
 
 function cargarClientes() {
-    fetch('http://localhost:3000/clientes')
+    fetch('/clientes')
     .then(res => res.json())
     .then(data => {
         clientesData = data;
@@ -303,7 +303,7 @@ function guardarCliente() {
     };
 
     if(clienteActual){
-        fetch(`http://localhost:3000/clientes/${clienteActual}`, {
+        fetch(`/clientes/${clienteActual}`, {
             method:'PUT',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify(datos)
@@ -312,7 +312,7 @@ function guardarCliente() {
             finalizar();
         });
     } else {
-        fetch('http://localhost:3000/clientes', {
+        fetch('/clientes', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify(datos)
@@ -356,7 +356,7 @@ function eliminarCliente(id) {
 
     if(!confirm("¿Estás seguro de eliminar este cliente?")) return;
 
-    fetch(`http://localhost:3000/clientes/${id}`, {method:'DELETE'})
+    fetch(`/clientes/${id}`, {method:'DELETE'})
     .then(res => res.json())
     .then(data => {
         if(data.error){
