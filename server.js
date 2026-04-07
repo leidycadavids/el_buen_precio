@@ -280,30 +280,33 @@ app.get('/abonos', (req, res) => {
 
 app.get('/cartera', (req, res) => {
 
-    const queryCreditos = 'SELECT SUM(valor) AS totalCreditos FROM creditos';
-    const queryAbonos = 'SELECT SUM(monto) AS totalAbonos FROM abonos';
+    const query = `
+        SELECT 
+            SUM(CASE WHEN estado = "pendiente" THEN valor ELSE 0 END) AS cartera,
+            SUM(valor) AS totalCreditos
+        FROM creditos
+    `;
 
-    db.query(queryCreditos, (err, resultCreditos) => {
+    db.query(query, (err, result) => {
         if (err) return res.send(err);
 
-        db.query(queryAbonos, (err, resultAbonos) => {
+        const cartera = result[0].cartera || 0;
+        const totalCreditos = result[0].totalCreditos || 0;
+
+        db.query('SELECT SUM(monto) AS totalAbonos FROM abonos', (err, abonosResult) => {
             if (err) return res.send(err);
 
-            const totalCreditos = resultCreditos[0].totalCreditos || 0;
-            const totalAbonos = resultAbonos[0].totalAbonos || 0;
-
-            const cartera = totalCreditos - totalAbonos;
+            const totalAbonos = abonosResult[0].totalAbonos || 0;
 
             res.json({
+                cartera,
                 totalCreditos,
-                totalAbonos,
-                cartera
+                totalAbonos
             });
         });
     });
 
 });
-
 
 // =======================
 // PUERTO (SOLO ESTE)
